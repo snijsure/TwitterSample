@@ -7,16 +7,19 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+        >
 
         <Button
+            style="?android:attr/buttonBarButtonStyle"
             android:id="@+id/loadMoreItems"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="loadMoreItems"
-            android:text="@string/loadmore" />
+            android:onClick="mostFav"
+            android:text="Most Fav" />
 
         <Button
+            style="?android:attr/buttonBarButtonStyle"
             android:id="@+id/sortDateButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -24,6 +27,7 @@
             android:text="@string/sortdate" />
 
         <Button
+            style="?android:attr/buttonBarButtonStyle"
             android:id="@+id/sortTextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

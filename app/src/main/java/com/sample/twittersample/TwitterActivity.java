@@ -19,35 +19,71 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-public class TwitterActivity extends Activity {
-    Context mContext;
-    Twitter mTwitter;
+import static android.support.v7.widget.helper.ItemTouchHelper.*;
 
-    RecyclerView mRecyclerView;
+public class TwitterActivity extends Activity {
+    private Context mContext;
+    private Twitter mTwitter;
+
+    private RecyclerView mRecyclerView;
 
     private final String TAG = "TwitterActivity";
     private final String CALLBACKURL = "T4J_OAuth://callback_main";
-    ArrayList<String> statusTexts = new ArrayList<String>();
-    List<RowItem> rowItems;
-    boolean flag_loading = false;
-    Query twitterQuery;
-    QueryResult twitterQueryResults;
-    public TwitterConnectionTask streamLoader;
-    ProgressDialog dialog;
-    CustomViewAdapter adapter;
+    private List<RowItem> rowItems;
+    private boolean flag_loading = false;
+
+    private TwitterConnectionTask mStreamLoader;
+    private Query mTwitterQuery;
+    private QueryResult mQueryResults;
+
+    private ProgressDialog dialog;
+    private CustomViewAdapter adapter;
+    private LinearLayoutManager mLayoutManager;
+    private int pastVisiblesItems;
+    private int visibleItemCount;
+    private int totalItemCount;
+    private long lowestTweetId = Long.MAX_VALUE;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         mRecyclerView = (RecyclerView) findViewById(R.id.listview);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener()
+        {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy)
+            {
+                if(dy > 0) //check for scroll down
+                {
+                    visibleItemCount = mLayoutManager.getChildCount();
+                    totalItemCount = mLayoutManager.getItemCount();
+                    pastVisiblesItems = mLayoutManager.findFirstVisibleItemPosition();
+
+                    if (!flag_loading)
+                    {
+                        if ( (visibleItemCount + pastVisiblesItems) >= totalItemCount)
+                        {
+                            flag_loading = true;
+                            Log.v(TAG, "Last Item Wow now load more items");
+                            loadMoreItems();
+                        }
+                    }
+                }
+            }
+        });
+
         mContext = getApplicationContext();
-        rowItems = new ArrayList<RowItem>();
+        rowItems = new ArrayList<>();
 
         dialog = new ProgressDialog(this);
         dialog.setMessage("Updating Tweets...");
@@ -55,29 +91,48 @@ public class TwitterActivity extends Activity {
         dialog.setCancelable(false);
 
         adapter = new CustomViewAdapter(rowItems);
+
+        Callback callback = new SimpleItemTouchHelperCallback(adapter);
+
+        ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
+        touchHelper.attachToRecyclerView(mRecyclerView);
+
+        adapter.setTouchHelper(touchHelper);
+
         mRecyclerView.setAdapter(adapter);
+
 
 		/* For fancy auto-loading on hitting bootom of list following code can be used
          * Needs more testing
          * */
 
         dialog.show();
-        streamLoader = new TwitterConnectionTask(mContext);
+        mStreamLoader = new TwitterConnectionTask(mContext);
 
         // Load twitter stream that talks about travel
 
-        streamLoader.execute("#travel");
+        mStreamLoader.execute("#travel");
     }
 
-    public void loadMoreItems() {
+    private void loadMoreItems() {
         dialog.show();
-        streamLoader = new TwitterConnectionTask(mContext);
-        streamLoader.execute("next");
+        mStreamLoader = new TwitterConnectionTask(mContext);
+        mStreamLoader.execute("next");
     }
+
 
     @Override
     public void onResume() {
         super.onResume();
+    }
+
+    public void mostFav(View v) {
+        dialog.show();
+        Log.d(TAG, "Sort By fav count");
+        Collections.sort(rowItems, new RowItem.OrderByFavCount());
+        adapter.notifyDataSetChanged();
+
+        dialog.dismiss();
     }
 
     // Method to sort list by date
@@ -104,6 +159,7 @@ public class TwitterActivity extends Activity {
 
     private class TwitterConnectionTask extends
             AsyncTask<String, String, String> {
+
         private java.util.List<twitter4j.Status> statuses;
 
         private Twitter getTwitterHandle() {
@@ -137,10 +193,9 @@ public class TwitterActivity extends Activity {
         synchronized private void fetchTweetsAboutTopic(String queryString) {
             try {
                 if (queryString.equals("next")) {
-                    twitterQuery = twitterQueryResults.nextQuery();
-                    if (twitterQuery != null) {
-                        twitterQueryResults = mTwitter.search(twitterQuery);
-                        statuses = twitterQueryResults.getTweets();
+                    if (mTwitterQuery != null) {
+                        mQueryResults = mTwitter.search(mTwitterQuery);
+                        statuses = mQueryResults.getTweets();
                         flag_loading = false;
                     } else {
                         runOnUiThread(new Runnable() {
@@ -153,35 +208,33 @@ public class TwitterActivity extends Activity {
                     }
                 } else {
                     Log.d(TAG, "Sending query " + queryString + " to twitter");
-                    twitterQuery = new Query(queryString);
-                    twitterQuery.setSince("2015-01-01");
-                    twitterQuery.setCount(50);
+                    mTwitterQuery = new Query(queryString);
+                    mTwitterQuery.setSince("2015-01-01");
+                    mTwitterQuery.setCount(50);
                     // Query result object as described in
                     // http://twitter4j.org/javadoc/twitter4j/QueryResult.html
 
-                    twitterQueryResults = mTwitter.search(twitterQuery);
-                    Log.d(TAG, "Twitt - Count =  " + twitterQueryResults.getCount());
+                    mQueryResults = mTwitter.search(mTwitterQuery);
 
-                    statuses = twitterQueryResults.getTweets();
+                    statuses = mQueryResults.getTweets();
                 }
 
 
             } catch (Exception e) {
-                statusTexts.add("Twitter query failed: " + e.toString());
                 Log.d(TAG, "Twitter query failed - " + e.toString());
+                runOnUiThread(new Runnable() {
+                    public void run()
+                    {
+                        Toast.makeText(mContext,"Unexpected error while fetching data, please retry",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
             }
-
         }
 
         public TwitterConnectionTask(Context context) {
             mContext = context;
-            statuses = new ArrayList<twitter4j.Status>();
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
+            statuses = new ArrayList<>();
         }
 
         protected String doInBackground(String... args) {
@@ -207,6 +260,10 @@ public class TwitterActivity extends Activity {
                         s.getFavoriteCount()
                 );
                 rowItems.add(item);
+                if (s.getId() < lowestTweetId) {
+                    lowestTweetId = s.getId();
+                    mTwitterQuery.setMaxId(lowestTweetId);
+                }
             }
             adapter.notifyDataSetChanged();
             dialog.dismiss();

@@ -1,15 +1,17 @@
 package com.sample.twittersample;
 
+import android.support.annotation.NonNull;
+
 import java.util.Date;
 import java.util.Comparator;
 
 
-public class RowItem implements Comparable<RowItem> {
-    private String url;
-    private String tweetText;
-    private Date tweetDate;
-    private String userName;
-    int favoriteCount;
+class RowItem implements Comparable<RowItem> {
+    private final String url;
+    private final String tweetText;
+    private final Date tweetDate;
+    private final String userName;
+    private final int favoriteCount;
 
     public RowItem(String url, String tweetText, Date tweetDate,
                    String userName, int favoriteCount) {
@@ -42,18 +44,14 @@ public class RowItem implements Comparable<RowItem> {
         return tweetText + "\n" + tweetText;
     }
 
-    public Date getDate() {
+    private Date getDate() {
         return tweetDate;
     }
 
-    public int compareTo(RowItem compareFruit) {
+    public int compareTo(@NonNull RowItem r) {
+        Date date1 = r.getDate();
 
-        String str = ((RowItem) compareFruit).getTweetText();
-
-        // ascending order
-        return this.tweetText.compareTo(str);
-
-
+        return date1.compareTo(tweetDate);
     }
 
     public static class OrderByText implements Comparator<RowItem> {
@@ -63,8 +61,22 @@ public class RowItem implements Comparable<RowItem> {
             String title1 = o1.getTweetText();
             String title2 = o2.getTweetText();
 
-            int k = title1.compareTo(title2);
-            return k;
+            return title1.compareTo(title2);
+        }
+    }
+
+    public static class OrderByFavCount implements Comparator<RowItem> {
+
+        @Override
+        public int compare(RowItem o1, RowItem o2) {
+            int favoriteCount1 = o1.getFavoriteCount();
+            int favoriteCount2 = o2.getFavoriteCount();
+            if (favoriteCount1 < favoriteCount2)
+                return 1;
+            else if (favoriteCount1 > favoriteCount2)
+                return -1;
+            else
+                return 0;
         }
     }
 
@@ -74,8 +86,7 @@ public class RowItem implements Comparable<RowItem> {
             Date date1 = o1.getDate();
             Date date2 = o2.getDate();
 
-            int k = date1.compareTo(date2);
-            return k;
+            return date1.compareTo(date2);
         }
     }
 }
