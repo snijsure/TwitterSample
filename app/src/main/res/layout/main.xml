@@ -31,11 +31,11 @@
             android:text="@string/sorttext" />
     </LinearLayout>
 
-    <ListView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/listview"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:divider="#b5b5b5"
-        android:dividerHeight="1dp" />
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+    </android.support.v7.widget.RecyclerView>
+
 
 </LinearLayout>

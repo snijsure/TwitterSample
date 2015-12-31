@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 
 
-import twitter4j.Paging;
 import twitter4j.Query;
 import twitter4j.QueryResult;
 import twitter4j.Twitter;
@@ -18,17 +17,17 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.widget.AbsListView;
-import android.widget.ListView;
 import android.widget.Toast;
 
 public class TwitterActivity extends Activity {
     Context mContext;
     Twitter mTwitter;
 
-    ListView mListView;
+    RecyclerView mRecyclerView;
 
     private final String TAG = "TwitterActivity";
     private final String CALLBACKURL = "T4J_OAuth://callback_main";
@@ -39,13 +38,14 @@ public class TwitterActivity extends Activity {
     QueryResult twitterQueryResults;
     public TwitterConnectionTask streamLoader;
     ProgressDialog dialog;
-    CustomListViewAdapter adapter;
+    CustomViewAdapter adapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        mListView = (ListView) findViewById(R.id.listview);
+        mRecyclerView = (RecyclerView) findViewById(R.id.listview);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mContext = getApplicationContext();
         rowItems = new ArrayList<RowItem>();
 
@@ -54,35 +54,12 @@ public class TwitterActivity extends Activity {
         dialog.setIndeterminate(true);
         dialog.setCancelable(false);
 
-        adapter = new CustomListViewAdapter(this, R.layout.list_item, rowItems);
-        mListView.setAdapter(adapter);
+        adapter = new CustomViewAdapter(rowItems);
+        mRecyclerView.setAdapter(adapter);
 
 		/* For fancy auto-loading on hitting bootom of list following code can be used
          * Needs more testing
          * */
-		 
-		mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
-			public void onScrollStateChanged(AbsListView view, int scrollState) {
-			}
-
-			public void onScroll(AbsListView view, int firstVisibleItem,
-					int visibleItemCount, int totalItemCount) {
-
-				/*
-				Log.d(TAG, "onScroll Called visibleItemCount "
-						+ visibleItemCount + " total " + totalItemCount
-						+ " firstVisible " + firstVisibleItem);
-                */
-				if ( (totalItemCount - visibleItemCount) <= firstVisibleItem
-						&& totalItemCount != 0) {
-					if (flag_loading == false) {
-						Log.d(TAG, "Loading more items");
-						flag_loading = true;
-						loadMoreItems();
-					}
-				}
-			}
-		});
 
         dialog.show();
         streamLoader = new TwitterConnectionTask(mContext);
