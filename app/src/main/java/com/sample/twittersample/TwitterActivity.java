@@ -22,6 +22,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import static android.support.v7.widget.helper.ItemTouchHelper.*;
@@ -48,6 +49,7 @@ public class TwitterActivity extends Activity {
     private int visibleItemCount;
     private int totalItemCount;
     private long lowestTweetId = Long.MAX_VALUE;
+    private TextView mTotalTweetCount;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -81,7 +83,7 @@ public class TwitterActivity extends Activity {
                 }
             }
         });
-
+        mTotalTweetCount = (TextView) findViewById(R.id.tweetCount);
         mContext = getApplicationContext();
         rowItems = new ArrayList<>();
 
@@ -133,6 +135,7 @@ public class TwitterActivity extends Activity {
         adapter.notifyDataSetChanged();
 
         dialog.dismiss();
+        mRecyclerView.smoothScrollToPosition(0);
     }
 
     // Method to sort list by date
@@ -143,6 +146,8 @@ public class TwitterActivity extends Activity {
         adapter.notifyDataSetChanged();
 
         dialog.dismiss();
+        mRecyclerView.scrollToPosition(0);
+
     }
 
     // Method to sort list by tweat text
@@ -152,6 +157,7 @@ public class TwitterActivity extends Activity {
         Collections.sort(rowItems, new RowItem.OrderByText());
         adapter.notifyDataSetChanged();
         dialog.dismiss();
+        mRecyclerView.scrollToPosition(0);
 
     }
 
@@ -267,6 +273,11 @@ public class TwitterActivity extends Activity {
             }
             adapter.notifyDataSetChanged();
             dialog.dismiss();
+            if ( mTotalTweetCount != null ) {
+                String totalCount = "Number of Tweets " + adapter.getItemCount();
+                mTotalTweetCount.setText(totalCount);
+            }
+
         }
     }
 }

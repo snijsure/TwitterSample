@@ -33,6 +33,13 @@
             android:layout_height="wrap_content"
             android:onClick="sortByText"
             android:text="@string/sorttext" />
+        <TextView
+            android:id="@+id/tweetCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorPrimaryText"
+            android:text="XXXXXXXXXXXXXXXXXXXXXXXXXX"
+            android:gravity="right"/>
     </LinearLayout>
 
     <android.support.v7.widget.RecyclerView
