@@ -19,3 +19,10 @@ https://github.com/snijsure/TwitterApiSample.git
 * Changes
   ** Dec 31, 2015
      Changed layout to use recyclerviewer.
+     Added support for swipe to delete
+     Implemented infinite scroll
+
+
+*Todo
+   * Show geolocation on where tweet was generated.
+   * Sort tweets by geolocation, show nearest to you on top.
