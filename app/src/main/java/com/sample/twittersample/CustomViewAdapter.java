@@ -89,7 +89,7 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
             author.setText("By " + rowItem.getUserName());
             favcount.setText("Fav #" + Integer.toString(rowItem.getFavoriteCount()));
             UrlImageViewHelper.setUrlDrawable(imageView, rowItem.getUrl(),
-                    R.drawable.icon_home);
+                    android.R.drawable.gallery_thumb);
         }
         public void onItemSelected() {
             mHolderView.setBackgroundColor(Color.LTGRAY);
