@@ -120,7 +120,7 @@ public class TwitterActivity extends Activity {
         adapter.notifyDataSetChanged();
 
         dialog.dismiss();
-        mRecyclerView.smoothScrollToPosition(0);
+        mRecyclerView.scrollToPosition(0);
     }
 
     // Method to sort list by date
