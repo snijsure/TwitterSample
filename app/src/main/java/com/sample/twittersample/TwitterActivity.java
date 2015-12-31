@@ -17,6 +17,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
@@ -50,39 +51,28 @@ public class TwitterActivity extends Activity {
     private int totalItemCount;
     private long lowestTweetId = Long.MAX_VALUE;
     private TextView mTotalTweetCount;
+    private SwipeRefreshLayout mRefreshLayout;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         mRecyclerView = (RecyclerView) findViewById(R.id.listview);
+        mRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener()
-        {
+        mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy)
-            {
-                if(dy > 0) //check for scroll down
-                {
-                    visibleItemCount = mLayoutManager.getChildCount();
-                    totalItemCount = mLayoutManager.getItemCount();
-                    pastVisiblesItems = mLayoutManager.findFirstVisibleItemPosition();
-
-                    if (!flag_loading)
-                    {
-                        if ( (visibleItemCount + pastVisiblesItems) >= totalItemCount)
-                        {
-                            flag_loading = true;
-                            Log.v(TAG, "Last Item Wow now load more items");
-                            loadMoreItems();
-                        }
-                    }
-                }
+            public void onRefresh() {
+                // Refresh items
+                flag_loading = true;
+                Log.v(TAG, "Last Item Wow now load more items");
+                mRefreshLayout.setRefreshing(true);
+                loadMoreItems();
             }
         });
+
         mTotalTweetCount = (TextView) findViewById(R.id.tweetCount);
         mContext = getApplicationContext();
         rowItems = new ArrayList<>();
@@ -102,11 +92,6 @@ public class TwitterActivity extends Activity {
         adapter.setTouchHelper(touchHelper);
 
         mRecyclerView.setAdapter(adapter);
-
-
-		/* For fancy auto-loading on hitting bootom of list following code can be used
-         * Needs more testing
-         * */
 
         dialog.show();
         mStreamLoader = new TwitterConnectionTask(mContext);
@@ -277,7 +262,7 @@ public class TwitterActivity extends Activity {
                 String totalCount = "Number of Tweets " + adapter.getItemCount();
                 mTotalTweetCount.setText(totalCount);
             }
-
+            mRefreshLayout.setRefreshing(false);
         }
     }
 }
