@@ -99,6 +99,10 @@ public class TwitterActivity extends Activity {
         // Load twitter stream that talks about travel
 
         mStreamLoader.execute("#travel");
+
+        getActionBar().setDisplayShowHomeEnabled(true);
+        getActionBar().setLogo(R.mipmap.ic_launcher);
+        getActionBar().setDisplayUseLogoEnabled(true);
     }
 
     private void loadMoreItems() {
