@@ -23,3 +23,14 @@ https://github.com/snijsure/TwitterApiSample.git
 * Yes I know, I could have just branched from the above repo my gradel related changes etc. I just wanted
   to leave that old code behind. Hopefully I will get more time to work on this code going forward. May
   be try different twitter library etc.
+
+* Changes
+  ** Dec 31, 2015
+     Changed layout to use recyclerviewer.
+     Added support for swipe to delete
+     Implemented infinite scroll
+
+
+*Todo
+   * Show geolocation on where tweet was generated.
+   * Sort tweets by geolocation, show nearest to you on top.
