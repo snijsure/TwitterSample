@@ -42,15 +42,22 @@ class SimpleItemTouchHelperCallback extends ItemTouchHelper.Callback {
         }
     }
 
+    /* We don't allow moving things but allow to swipe them away
+       hence always return false.
+       If we anted to support movement we can call mAdapter.onItemMove
+     */
     @Override
     public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder source, RecyclerView.ViewHolder target) {
         if (source.getItemViewType() != target.getItemViewType()) {
             return false;
         }
 
+        return false;
+        /*
         // Notify the adapter of the move
         mAdapter.onItemMove(source.getAdapterPosition(), target.getAdapterPosition());
         return true;
+        */
     }
 
     @Override

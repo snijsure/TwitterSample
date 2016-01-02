@@ -57,6 +57,7 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
         return mRowItems.size();
     }
 
+
     public void onItemDismiss(int position) {
         mRowItems.remove(position);
         notifyItemRemoved(position);
@@ -67,6 +68,7 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
         notifyItemMoved(fromPosition, toPosition);
         return true;
     }
+
 
     class TweetHolder extends RecyclerView.ViewHolder {
         private final ImageView imageView;

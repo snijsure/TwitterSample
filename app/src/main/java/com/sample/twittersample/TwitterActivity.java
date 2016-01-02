@@ -8,6 +8,7 @@ import java.util.List;
 
 import twitter4j.Query;
 import twitter4j.QueryResult;
+import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
@@ -15,16 +16,26 @@ import twitter4j.auth.AccessToken;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import static android.support.v7.widget.helper.ItemTouchHelper.*;
 
@@ -51,14 +62,39 @@ public class TwitterActivity extends Activity {
     private int totalItemCount;
     private long lowestTweetId = Long.MAX_VALUE;
     private TextView mTotalTweetCount;
-    private SwipeRefreshLayout mRefreshLayout;
+    private SwipeRefreshWrapper mRefreshLayout;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        mContext = getApplicationContext();
+
+        LinearLayout mainWindowLayout = (LinearLayout) findViewById(R.id.main_window);
+
+        /* Note: Swipe down to referesh from SwipeRefresh view and infinite scroll of
+         * RecyclerView don't work well together.
+         * Hence we create RefreshWrapper by hand, which overrides the canChildScrollUp
+         * method.
+         * Below is the code that removes the RecyclerView from R.id.main_window
+         * and inserts as child of SwipeRefreshWrapper
+         */
         mRecyclerView = (RecyclerView) findViewById(R.id.listview);
-        mRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
+
+        mRefreshLayout = new SwipeRefreshWrapper(mContext);
+
+        mainWindowLayout.removeView(mRecyclerView);
+
+        mainWindowLayout.addView(mRefreshLayout, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+
+        mRefreshLayout.addView(mRecyclerView, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
@@ -67,14 +103,12 @@ public class TwitterActivity extends Activity {
             public void onRefresh() {
                 // Refresh items
                 flag_loading = true;
-                Log.v(TAG, "Last Item Wow now load more items");
                 mRefreshLayout.setRefreshing(true);
                 loadMoreItems();
             }
         });
 
         mTotalTweetCount = (TextView) findViewById(R.id.tweetCount);
-        mContext = getApplicationContext();
         rowItems = new ArrayList<>();
 
         dialog = new ProgressDialog(this);
@@ -88,7 +122,6 @@ public class TwitterActivity extends Activity {
 
         ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
         touchHelper.attachToRecyclerView(mRecyclerView);
-
         adapter.setTouchHelper(touchHelper);
 
         mRecyclerView.setAdapter(adapter);
@@ -103,9 +136,21 @@ public class TwitterActivity extends Activity {
         getActionBar().setDisplayShowHomeEnabled(true);
         getActionBar().setLogo(R.mipmap.ic_launcher);
         getActionBar().setDisplayUseLogoEnabled(true);
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+
+        int location[]=new int[2];
+        View v = findViewById(R.id.sortDateButton);
+        mRecyclerView.getLocationOnScreen(location);
+        Toast toast=Toast.makeText(getApplicationContext(),
+                "Swipe down to referesh", Toast.LENGTH_LONG);
+        toast.setGravity(Gravity.TOP| Gravity.CENTER_HORIZONTAL,v.getRight()-25, location[1]+20);
+        toast.show();
+
     }
 
-    private void loadMoreItems() {
+    synchronized private void loadMoreItems() {
         dialog.show();
         mStreamLoader = new TwitterConnectionTask(mContext);
         mStreamLoader.execute("next");
@@ -150,15 +195,55 @@ public class TwitterActivity extends Activity {
 
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Twitter Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.sample.twittersample/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Twitter Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.sample.twittersample/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
+    }
+
     // This task  "opens" as connection using Twitter4j API and fetches tweets
 
     private class TwitterConnectionTask extends
             AsyncTask<String, String, String> {
 
-        private java.util.List<twitter4j.Status> statuses;
+        private List<twitter4j.Status> statuses;
 
         private Twitter getTwitterHandle() {
-            Log.d(TAG,"In method getTwitterHandle");
+            Log.d(TAG, "In method getTwitterHandle");
             Twitter twitterFactorInstance;
             twitterFactorInstance = new TwitterFactory().getInstance();
             Log.d(TAG, "TwitterFactory.getInstance returned " + twitterFactorInstance);
@@ -169,7 +254,7 @@ public class TwitterActivity extends Activity {
             AccessToken a = new AccessToken(getResources().getString(
                     R.string.access_token),
                     getResources().getString(
-                    R.string.access_token_secret));
+                            R.string.access_token_secret));
             twitterFactorInstance.setOAuthAccessToken(a);
 
             try {
@@ -194,9 +279,8 @@ public class TwitterActivity extends Activity {
                         flag_loading = false;
                     } else {
                         runOnUiThread(new Runnable() {
-                            public void run()
-                            {
-                                Toast.makeText(mContext,R.string.no_more_tweets,
+                            public void run() {
+                                Toast.makeText(mContext, R.string.no_more_tweets,
                                         Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -218,9 +302,8 @@ public class TwitterActivity extends Activity {
             } catch (Exception e) {
                 Log.d(TAG, "Twitter query failed - " + e.toString());
                 runOnUiThread(new Runnable() {
-                    public void run()
-                    {
-                        Toast.makeText(mContext,"Unexpected error while fetching data, please retry",
+                    public void run() {
+                        Toast.makeText(mContext, "Unexpected error while fetching data, please retry",
                                 Toast.LENGTH_LONG).show();
                     }
                 });
@@ -262,11 +345,46 @@ public class TwitterActivity extends Activity {
             }
             adapter.notifyDataSetChanged();
             dialog.dismiss();
-            if ( mTotalTweetCount != null ) {
+            if (mTotalTweetCount != null) {
                 String totalCount = "Number of Tweets " + adapter.getItemCount();
                 mTotalTweetCount.setText(totalCount);
             }
             mRefreshLayout.setRefreshing(false);
         }
+    }
+
+
+    public class SwipeRefreshWrapper extends SwipeRefreshLayout {
+
+        public SwipeRefreshWrapper(Context context) {
+            super(context);
+        }
+
+        public SwipeRefreshWrapper(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+
+        private boolean isLastItemDisplaying(RecyclerView recyclerView) {
+            if (recyclerView.getAdapter().getItemCount() != 0) {
+                int lastVisibleItemPosition =
+                        ((LinearLayoutManager)recyclerView.getLayoutManager()).
+                                findLastCompletelyVisibleItemPosition();
+                if (lastVisibleItemPosition != RecyclerView.NO_POSITION
+                        && lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1)
+                    return true;
+            }
+            return false;
+        }
+
+        @Override
+        synchronized public boolean canChildScrollUp() {
+            boolean ret = isLastItemDisplaying(mRecyclerView);
+            if (ret == true && !flag_loading) {
+                flag_loading = true;
+                loadMoreItems();
+            }
+            return ret;
+        }
+
     }
 }
