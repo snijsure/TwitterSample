@@ -5,9 +5,12 @@ android {
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        applicationId "com.sample.twittersample"
+        applicationId "com.snijsure.twittersample"
         minSdkVersion 21
         targetSdkVersion  23
+        versionCode 1
+        versionName "1.0"
+
     }
 
     buildTypes {
@@ -26,5 +29,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:design:23.1.1'
     compile 'com.android.support:recyclerview-v7:23.1.1'
-    compile 'com.google.android.gms:play-services-appindexing:8.1.0'
+    compile 'com.google.android.gms:play-services-appindexing:8.3.0'
 }

@@ -1,4 +1,4 @@
-package com.sample.twittersample;
+package com.snijsure.twittersample;
 
 
 import java.util.ArrayList;
@@ -16,6 +16,11 @@ import twitter4j.auth.AccessToken;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -76,7 +81,6 @@ public class TwitterActivity extends Activity {
         mContext = getApplicationContext();
 
         LinearLayout mainWindowLayout = (LinearLayout) findViewById(R.id.main_window);
-
         /* Note: Swipe down to referesh from SwipeRefresh view and infinite scroll of
          * RecyclerView don't work well together.
          * Hence we create RefreshWrapper by hand, which overrides the canChildScrollUp
@@ -210,7 +214,7 @@ public class TwitterActivity extends Activity {
                 // Otherwise, set the URL to null.
                 Uri.parse("http://host/path"),
                 // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://com.sample.twittersample/http/host/path")
+                Uri.parse("android-app://com.snijsure.twittersample/http/host/path")
         );
         AppIndex.AppIndexApi.start(client, viewAction);
     }
@@ -229,7 +233,7 @@ public class TwitterActivity extends Activity {
                 // Otherwise, set the URL to null.
                 Uri.parse("http://host/path"),
                 // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://com.sample.twittersample/http/host/path")
+                Uri.parse("android-app://com.snijsure.twittersample/http/host/path")
         );
         AppIndex.AppIndexApi.end(client, viewAction);
         client.disconnect();
@@ -346,7 +350,7 @@ public class TwitterActivity extends Activity {
             adapter.notifyDataSetChanged();
             dialog.dismiss();
             if (mTotalTweetCount != null) {
-                String totalCount = "Number of Tweets " + adapter.getItemCount();
+                String totalCount = "# " + adapter.getItemCount();
                 mTotalTweetCount.setText(totalCount);
             }
             mRefreshLayout.setRefreshing(false);

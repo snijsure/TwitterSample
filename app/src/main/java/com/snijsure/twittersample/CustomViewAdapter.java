@@ -1,4 +1,4 @@
-package com.sample.twittersample;
+package com.snijsure.twittersample;
 
 import java.util.Collections;
 import java.util.List;

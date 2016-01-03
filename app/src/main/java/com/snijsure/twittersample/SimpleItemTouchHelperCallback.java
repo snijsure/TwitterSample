@@ -1,4 +1,4 @@
-package com.sample.twittersample;
+package com.snijsure.twittersample;
 
 import android.graphics.Canvas;
 import android.support.v7.widget.GridLayoutManager;

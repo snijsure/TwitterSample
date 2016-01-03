@@ -1,4 +1,4 @@
-package com.sample.twittersample;
+package com.snijsure.twittersample;
 
 import android.support.annotation.NonNull;
 
