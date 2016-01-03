@@ -75,6 +75,7 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
         private final TextView tweetText;
         private final TextView author;
         private final TextView favcount;
+        private final TextView geoLocation;
         final View mHolderView;
 
         public TweetHolder(View itemView) {
@@ -84,12 +85,21 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
             imageView = (ImageView) itemView.findViewById(R.id.icon);
             author = (TextView) itemView.findViewById(R.id.author);
             favcount = (TextView) itemView.findViewById(R.id.favcount);
+            geoLocation = (TextView)itemView.findViewById(R.id.geolocation);
         }
 
         public void bindTweet(RowItem rowItem) {
             tweetText.setText(rowItem.getTweetText());
             author.setText("By " + rowItem.getUserName());
             favcount.setText("Fav #" + Integer.toString(rowItem.getFavoriteCount()));
+            if ( geoLocation != null ) {
+                String s = rowItem.getGeoLocationString();
+                if ( s.isEmpty() )
+                    geoLocation.setText("Geo Location N/A");
+                else
+                    geoLocation.setText("Geo Location " + s);
+
+            }
             UrlImageViewHelper.setUrlDrawable(imageView, rowItem.getUrl(),
                     android.R.drawable.gallery_thumb);
         }

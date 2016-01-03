@@ -5,6 +5,8 @@ import android.support.annotation.NonNull;
 import java.util.Date;
 import java.util.Comparator;
 
+import twitter4j.GeoLocation;
+
 
 class RowItem implements Comparable<RowItem> {
     private final String url;
@@ -12,14 +14,16 @@ class RowItem implements Comparable<RowItem> {
     private final Date tweetDate;
     private final String userName;
     private final int favoriteCount;
+    private final GeoLocation geoLocation;
 
     public RowItem(String url, String tweetText, Date tweetDate,
-                   String userName, int favoriteCount) {
+                   String userName, int favoriteCount, GeoLocation location) {
         this.url = url;
         this.tweetText = tweetText;
         this.tweetDate = tweetDate;
         this.userName = userName;
         this.favoriteCount = favoriteCount;
+        this.geoLocation = location;
 
     }
 
@@ -39,6 +43,13 @@ class RowItem implements Comparable<RowItem> {
         return tweetText;
     }
 
+    public String getGeoLocationString() {
+        if ( geoLocation != null )
+            return geoLocation.toString();
+        else
+            return "";
+    }
+
     @Override
     public String toString() {
         return tweetText + "\n" + tweetText;
@@ -47,6 +58,8 @@ class RowItem implements Comparable<RowItem> {
     private Date getDate() {
         return tweetDate;
     }
+
+
 
     public int compareTo(@NonNull RowItem r) {
         Date date1 = r.getDate();

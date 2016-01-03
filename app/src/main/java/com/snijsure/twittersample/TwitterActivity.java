@@ -339,7 +339,8 @@ public class TwitterActivity extends Activity {
                         s.getText(),
                         s.getCreatedAt(),
                         s.getUser().getName(),
-                        s.getFavoriteCount()
+                        s.getFavoriteCount(),
+                        s.getGeoLocation()
                 );
                 rowItems.add(item);
                 if (s.getId() < lowestTweetId) {
