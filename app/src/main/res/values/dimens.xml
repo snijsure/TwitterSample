@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="card_elevation">1dp</dimen>
+    <dimen name="card_corner_radius">0dp</dimen>
+</resources>

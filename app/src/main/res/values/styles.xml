@@ -6,10 +6,7 @@
 
     </style>
 
-    <style name="AppTheme.Base" parent="@android:style/Theme.Material">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:windowBackground">@android:color/white</item>
+    <style name="AppTheme.Base" parent="@android:style/Theme.Material.Light.DarkActionBar">
     </style>
+
 </resources>

@@ -1,26 +1,9 @@
 package com.snijsure.twittersample;
 
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-
-import twitter4j.Query;
-import twitter4j.QueryResult;
-import twitter4j.Status;
-import twitter4j.Twitter;
-import twitter4j.TwitterFactory;
-import twitter4j.auth.AccessToken;
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -32,8 +15,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,7 +23,17 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import static android.support.v7.widget.helper.ItemTouchHelper.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import twitter4j.Query;
+import twitter4j.QueryResult;
+import twitter4j.Twitter;
+import twitter4j.TwitterFactory;
+import twitter4j.auth.AccessToken;
+
+import static android.support.v7.widget.helper.ItemTouchHelper.Callback;
 
 public class TwitterActivity extends Activity {
     private Context mContext;
@@ -108,7 +99,7 @@ public class TwitterActivity extends Activity {
                 // Refresh items
                 flag_loading = true;
                 mRefreshLayout.setRefreshing(true);
-                loadMoreItems();
+                loadMoreItems(false);
             }
         });
 
@@ -140,6 +131,8 @@ public class TwitterActivity extends Activity {
         getActionBar().setDisplayShowHomeEnabled(true);
         getActionBar().setLogo(R.mipmap.ic_launcher);
         getActionBar().setDisplayUseLogoEnabled(true);
+
+
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
@@ -154,8 +147,9 @@ public class TwitterActivity extends Activity {
 
     }
 
-    synchronized private void loadMoreItems() {
-        dialog.show();
+    synchronized private void loadMoreItems(boolean showDialog) {
+        if ( showDialog == true )
+            dialog.show();
         mStreamLoader = new TwitterConnectionTask(mContext);
         mStreamLoader.execute("next");
     }
@@ -166,7 +160,7 @@ public class TwitterActivity extends Activity {
         super.onResume();
     }
 
-    public void mostFav(View v) {
+    public void mostFav(@SuppressWarnings("UnusedParameters") View v) {
         dialog.show();
         Log.d(TAG, "Sort By fav count");
         Collections.sort(rowItems, new RowItem.OrderByFavCount());
@@ -177,7 +171,7 @@ public class TwitterActivity extends Activity {
     }
 
     // Method to sort list by date
-    public void sortByDate(View v) {
+    public void sortByDate(@SuppressWarnings("UnusedParameters") View v) {
         dialog.show();
         Log.d(TAG, "Sort By Date");
         Collections.sort(rowItems, new RowItem.OrderByDate());
@@ -189,7 +183,7 @@ public class TwitterActivity extends Activity {
     }
 
     // Method to sort list by tweat text
-    public void sortByText(View v) {
+    public void sortByText(@SuppressWarnings("UnusedParameters") View v) {
         dialog.show();
         Log.d(TAG, "Sort By Text");
         Collections.sort(rowItems, new RowItem.OrderByText());
@@ -349,7 +343,8 @@ public class TwitterActivity extends Activity {
                 }
             }
             adapter.notifyDataSetChanged();
-            dialog.dismiss();
+            if (dialog.isShowing())
+                dialog.dismiss();
             if (mTotalTweetCount != null) {
                 String totalCount = "# " + adapter.getItemCount();
                 mTotalTweetCount.setText(totalCount);
@@ -386,7 +381,7 @@ public class TwitterActivity extends Activity {
             boolean ret = isLastItemDisplaying(mRecyclerView);
             if (ret == true && !flag_loading) {
                 flag_loading = true;
-                loadMoreItems();
+                loadMoreItems(true);
             }
             return ret;
         }
