@@ -128,10 +128,11 @@ public class TwitterActivity extends Activity {
 
         mStreamLoader.execute("#travel");
 
-        getActionBar().setDisplayShowHomeEnabled(true);
-        getActionBar().setLogo(R.mipmap.ic_launcher);
-        getActionBar().setDisplayUseLogoEnabled(true);
-
+        if ( getActionBar() != null ) {
+            getActionBar().setDisplayShowHomeEnabled(true);
+            getActionBar().setLogo(R.mipmap.ic_launcher);
+            getActionBar().setDisplayUseLogoEnabled(true);
+        }
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.

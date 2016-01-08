@@ -12,7 +12,6 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="?android:colorAccent"
         >
 
         <Button
@@ -21,7 +20,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="mostFav"
-            android:textColor="@color/colorButtonText"
             android:text="Most Fav" />
 
         <Button
@@ -30,7 +28,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="sortByDate"
-            android:textColor="@color/colorButtonText"
 
             android:text="@string/sortdate" />
 
@@ -40,7 +37,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="sortByText"
-            android:textColor="@color/colorButtonText"
 
             android:text="@string/sorttext" />
         <TextView
@@ -50,15 +46,13 @@
             android:layout_height="wrap_content"
             android:layout_gravity="left"
             android:gravity="right"
-            android:textColor="@color/colorButtonText"
             />
     </LinearLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/listview"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:background="@color/colorPrimaryDark">
+        android:layout_height="match_parent">
 
     </android.support.v7.widget.RecyclerView>
 

@@ -27,7 +27,6 @@
             android:autoLink="web"
             android:paddingBottom="10dp"
             android:text="tweet"
-            android:textColor="@color/colorPrimaryLight"
             android:textSize="16sp" />
 
         <LinearLayout
