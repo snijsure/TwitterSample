@@ -14,6 +14,7 @@ import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.swipeDown;
 import static android.support.test.espresso.action.ViewActions.swipeUp;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.isRoot;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -23,8 +24,7 @@ public class TwitterAppTest {
     public ActivityTestRule<TwitterActivity> mActivityRule = new ActivityTestRule<>(
             TwitterActivity.class);
 
-    @Test
-    public void basicTweetLoad_andSort() {
+    void doUiActions() {
         onView(withId(R.id.sortDateButton)).perform(click());
         onView(withId(R.id.listview)).perform(swipeDown());
         onView(withId(R.id.listview)).perform(swipeDown());
@@ -33,9 +33,21 @@ public class TwitterAppTest {
         onView(withId(R.id.mostfav)).perform(click());
 
 
-        for ( int i = 0 ; i < 40; i++ ) {
+        for ( int i = 0 ; i < 20; i++ ) {
             onView(withId(R.id.listview)).perform(swipeUp());
         }
+    }
+
+    @Test
+    public void tweetLoad_andNavigate() {
+        onView(isRoot()).perform(OrientationChangeAction.orientationLandscape());
+
+        doUiActions();
+
+        onView(isRoot()).perform(OrientationChangeAction.orientationPortrait());
+
+        doUiActions();
 
     }
+
 }
