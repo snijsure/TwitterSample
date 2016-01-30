@@ -166,7 +166,7 @@ public class TwitterActivity extends Activity {
     }
 
     // Method to sort list by date
-    public void sortByDate(@SuppressWarnings("UnusedParameters") View v) {
+    public synchronized void sortByDate(@SuppressWarnings("UnusedParameters") View v) {
         dialog.show();
         Log.d(TAG, "Sort By Date");
         Collections.sort(rowItems, new RowItem.OrderByDate());
@@ -308,6 +308,7 @@ public class TwitterActivity extends Activity {
                     mTwitterQuery.setMaxId(lowestTweetId);
                 }
             }
+            Collections.sort(rowItems, new RowItem.OrderByDate());
             adapter.notifyDataSetChanged();
             if (dialog.isShowing())
                 dialog.dismiss();
