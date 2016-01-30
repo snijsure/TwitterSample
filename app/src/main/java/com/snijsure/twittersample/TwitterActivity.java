@@ -4,7 +4,6 @@ package com.snijsure.twittersample;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,42 +23,28 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import twitter4j.Query;
-import twitter4j.QueryResult;
-import twitter4j.Twitter;
-import twitter4j.TwitterFactory;
-import twitter4j.auth.AccessToken;
 
 import static android.support.v7.widget.helper.ItemTouchHelper.Callback;
 
-public class TwitterActivity extends Activity {
-    private Context mContext;
-    private Twitter mTwitter;
+public class TwitterActivity extends Activity implements OnTweetUpdate {
 
-    @Bind(R.id.listview) RecyclerView mRecyclerView;
+    @Bind(R.id.listview)
+    RecyclerView mRecyclerView;
 
     private final String TAG = "TwitterActivity";
     private final String CALLBACKURL = "T4J_OAuth://callback_main";
     private List<RowItem> rowItems;
-    private boolean flag_loading = false;
 
     private TwitterConnectionTask mStreamLoader;
-    private Query mTwitterQuery;
-    private QueryResult mQueryResults;
+
 
     private ProgressDialog dialog;
     private CustomViewAdapter adapter;
-    private LinearLayoutManager mLayoutManager;
-    private int pastVisiblesItems;
-    private int visibleItemCount;
-    private int totalItemCount;
-    private long lowestTweetId = Long.MAX_VALUE;
-
-    @Bind(R.id.tweetCount) TextView mTotalTweetCount;
-    @Bind(R.id.sortDateButton) View sortByDateButton;
-    @Bind(R.id.main_window) LinearLayout mainWindowLayout;
-
     private SwipeRefreshWrapper mRefreshLayout;
+    @Bind(R.id.tweetCount)
+    TextView mTotalTweetCount;
+    @Bind(R.id.sortDateButton)
+    View sortByDateButton;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,17 +52,17 @@ public class TwitterActivity extends Activity {
         setContentView(R.layout.main);
         ButterKnife.bind(this);
 
-        mContext = getApplicationContext();
+        Context mContext = getApplicationContext();
         LinearLayout mainWindowLayout = (LinearLayout) findViewById(R.id.main_window);
 
 
-        /* Note: Swipe down to referesh from SwipeRefresh view and infinite scroll of
-         * RecyclerView don't work well together.
-         * Hence we create RefreshWrapper by hand, which overrides the canChildScrollUp
-         * method.
-         * Below is the code that removes the RecyclerView from R.id.main_window
-         * and inserts as child of SwipeRefreshWrapper
-         */
+            /* Note: Swipe down to refresh from SwipeRefresh view and infinite scroll of
+             * RecyclerView don't work well together.
+             * Hence we create RefreshWrapper by hand, which overrides the canChildScrollUp
+             * method.
+             * Below is the code that removes the RecyclerView from R.id.main_window
+             * and inserts as child of SwipeRefreshWrapper
+             */
 
         mRefreshLayout = new SwipeRefreshWrapper(mContext);
 
@@ -88,14 +73,14 @@ public class TwitterActivity extends Activity {
 
         mRefreshLayout.addView(mRecyclerView, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT);
-        mLayoutManager = new LinearLayoutManager(this);
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 // Refresh items
-                flag_loading = true;
+                mStreamLoader.setFlag_loading(true);
                 mRefreshLayout.setRefreshing(true);
                 loadMoreItems(false);
             }
@@ -120,32 +105,32 @@ public class TwitterActivity extends Activity {
         mRecyclerView.setAdapter(adapter);
 
         dialog.show();
-        mStreamLoader = new TwitterConnectionTask(mContext);
+        mStreamLoader = new TwitterConnectionTask(this);
 
         // Load twitter stream that talks about travel
 
         mStreamLoader.execute("#travel");
 
-        if ( getActionBar() != null ) {
+        if (getActionBar() != null) {
             getActionBar().setDisplayShowHomeEnabled(true);
             getActionBar().setLogo(R.mipmap.ic_launcher);
             getActionBar().setDisplayUseLogoEnabled(true);
         }
 
 
-        int location[]=new int[2];
+        int location[] = new int[2];
         mRecyclerView.getLocationOnScreen(location);
-        Toast toast=Toast.makeText(getApplicationContext(),
+        Toast toast = Toast.makeText(getApplicationContext(),
                 "Swipe down to referesh", Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.TOP| Gravity.CENTER_HORIZONTAL,sortByDateButton.getRight()-25, location[1]+20);
+        toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, sortByDateButton.getRight() - 25, location[1] + 20);
         toast.show();
 
     }
 
     synchronized private void loadMoreItems(boolean showDialog) {
-        if ( showDialog == true )
+        if (showDialog)
             dialog.show();
-        mStreamLoader = new TwitterConnectionTask(mContext);
+        mStreamLoader = new TwitterConnectionTask(this);
         mStreamLoader.execute("next");
     }
 
@@ -199,127 +184,36 @@ public class TwitterActivity extends Activity {
         super.onStop();
     }
 
-    // This task  "opens" as connection using Twitter4j API and fetches tweets
-
-    private class TwitterConnectionTask extends
-            AsyncTask<String, String, String> {
-
-        private List<twitter4j.Status> statuses;
-
-        private Twitter getTwitterHandle() {
-            Log.d(TAG, "In method getTwitterHandle");
-            Twitter twitterFactorInstance;
-            twitterFactorInstance = new TwitterFactory().getInstance();
-            Log.d(TAG, "TwitterFactory.getInstance returned " + twitterFactorInstance);
-
-            twitterFactorInstance.setOAuthConsumer(
-                    getResources().getString(R.string.consumer_key),
-                    getResources().getString(R.string.consumer_secret));
-            AccessToken a = new AccessToken(getResources().getString(
-                    R.string.access_token),
-                    getResources().getString(
-                            R.string.access_token_secret));
-            twitterFactorInstance.setOAuthAccessToken(a);
-
-            try {
-                return twitterFactorInstance;
-            } catch (Exception e) {
-                Log.d(TAG, "Exception while getting Twitter instance = " + e);
-            }
-            return null;
-        }
-
-        // Note well, I am not using the twitter4j API correctly here.
-        // May be i need to hold on to previous index into the page
-        // and ask for records after that. This like maxId, getSinceId()
-        // May be some day....
-
-        synchronized private void fetchTweetsAboutTopic(String queryString) {
-            try {
-                if (queryString.equals("next")) {
-                    if (mTwitterQuery != null) {
-                        mQueryResults = mTwitter.search(mTwitterQuery);
-                        statuses = mQueryResults.getTweets();
-                        flag_loading = false;
-                    } else {
-                        runOnUiThread(new Runnable() {
-                            public void run() {
-                                Toast.makeText(mContext, R.string.no_more_tweets,
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                } else {
-                    Log.d(TAG, "Sending query " + queryString + " to twitter");
-                    mTwitterQuery = new Query(queryString);
-                    mTwitterQuery.setSince("2015-01-01");
-                    mTwitterQuery.setCount(50);
-                    // Query result object as described in
-                    // http://twitter4j.org/javadoc/twitter4j/QueryResult.html
-
-                    mQueryResults = mTwitter.search(mTwitterQuery);
-
-                    statuses = mQueryResults.getTweets();
-                }
-
-
-            } catch (Exception e) {
-                Log.d(TAG, "Twitter query failed - " + e.toString());
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast.makeText(mContext, "Unexpected error while fetching data, please retry",
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
+    @Override
+    public synchronized long onUpdate(List<twitter4j.Status> newTweets, long lowestTweetId) {
+        long ret = lowestTweetId;
+        for (twitter4j.Status s : newTweets) {
+            RowItem item = new RowItem(
+                    s.getUser().getBiggerProfileImageURL(),
+                    s.getText(),
+                    s.getCreatedAt(),
+                    s.getUser().getName(),
+                    s.getFavoriteCount(),
+                    s.getGeoLocation()
+            );
+            rowItems.add(item);
+            if (s.getId() < lowestTweetId) {
+                ret = s.getId();
             }
         }
+        Collections.sort(rowItems, new RowItem.OrderByDate());
 
-        public TwitterConnectionTask(Context context) {
-            mContext = context;
-            statuses = new ArrayList<>();
+
+        adapter.notifyDataSetChanged();
+        if (dialog.isShowing())
+            dialog.dismiss();
+        if (mTotalTweetCount != null) {
+            String totalCount = "# " + adapter.getItemCount();
+            mTotalTweetCount.setText(totalCount);
         }
-
-        protected String doInBackground(String... args) {
-            if (mTwitter == null)
-                mTwitter = getTwitterHandle();
-
-            if (mTwitter != null) {
-                fetchTweetsAboutTopic(args[0]);
-            } else
-                Log.d(TAG, "mTwitter is null");
-            return null;
-        }
-
-        protected void onPostExecute(String file_url) {
-            // Data contained in statuses is found at
-            // http://twitter4j.org/javadoc/twitter4j/Status.html
-            for (twitter4j.Status s : statuses) {
-                RowItem item = new RowItem(
-                        s.getUser().getBiggerProfileImageURL(),
-                        s.getText(),
-                        s.getCreatedAt(),
-                        s.getUser().getName(),
-                        s.getFavoriteCount(),
-                        s.getGeoLocation()
-                );
-                rowItems.add(item);
-                if (s.getId() < lowestTweetId) {
-                    lowestTweetId = s.getId();
-                    mTwitterQuery.setMaxId(lowestTweetId);
-                }
-            }
-            Collections.sort(rowItems, new RowItem.OrderByDate());
-            adapter.notifyDataSetChanged();
-            if (dialog.isShowing())
-                dialog.dismiss();
-            if (mTotalTweetCount != null) {
-                String totalCount = "# " + adapter.getItemCount();
-                mTotalTweetCount.setText(totalCount);
-            }
-            mRefreshLayout.setRefreshing(false);
-        }
+        mRefreshLayout.setRefreshing(false);
+        return ret;
     }
-
 
     public class SwipeRefreshWrapper extends SwipeRefreshLayout {
 
@@ -334,7 +228,7 @@ public class TwitterActivity extends Activity {
         private boolean isLastItemDisplaying(RecyclerView recyclerView) {
             if (recyclerView.getAdapter().getItemCount() != 0) {
                 int lastVisibleItemPosition =
-                        ((LinearLayoutManager)recyclerView.getLayoutManager()).
+                        ((LinearLayoutManager) recyclerView.getLayoutManager()).
                                 findLastCompletelyVisibleItemPosition();
                 if (lastVisibleItemPosition != RecyclerView.NO_POSITION
                         && lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1)
@@ -346,8 +240,8 @@ public class TwitterActivity extends Activity {
         @Override
         synchronized public boolean canChildScrollUp() {
             boolean ret = isLastItemDisplaying(mRecyclerView);
-            if (ret == true && !flag_loading) {
-                flag_loading = true;
+            if (ret && !mStreamLoader.isFlag_loading()) {
+                mStreamLoader.setFlag_loading(true);
                 loadMoreItems(true);
             }
             return ret;

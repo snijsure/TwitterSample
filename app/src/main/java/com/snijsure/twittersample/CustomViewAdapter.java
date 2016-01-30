@@ -75,7 +75,7 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
 
 
     class TweetHolder extends RecyclerView.ViewHolder {
-        final View mHolderView;
+        View mHolderView;
         @Bind(R.id.title) TextView tweetText;
         @Bind(R.id.icon) ImageView imageView;
         @Bind(R.id.author) TextView author;

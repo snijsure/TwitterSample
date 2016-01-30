@@ -1,4 +1,4 @@
-package com.travelsn.twittersample;
+package com.snijsure.twittersample;
 
 import org.junit.Test;
 
