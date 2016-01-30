@@ -4,7 +4,6 @@ package com.snijsure.twittersample;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -19,14 +18,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.api.GoogleApiClient;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import twitter4j.Query;
 import twitter4j.QueryResult;
 import twitter4j.Twitter;
@@ -39,7 +36,7 @@ public class TwitterActivity extends Activity {
     private Context mContext;
     private Twitter mTwitter;
 
-    private RecyclerView mRecyclerView;
+    @Bind(R.id.listview) RecyclerView mRecyclerView;
 
     private final String TAG = "TwitterActivity";
     private final String CALLBACKURL = "T4J_OAuth://callback_main";
@@ -57,21 +54,23 @@ public class TwitterActivity extends Activity {
     private int visibleItemCount;
     private int totalItemCount;
     private long lowestTweetId = Long.MAX_VALUE;
-    private TextView mTotalTweetCount;
+
+    @Bind(R.id.tweetCount) TextView mTotalTweetCount;
+    @Bind(R.id.sortDateButton) View sortByDateButton;
+    @Bind(R.id.main_window) LinearLayout mainWindowLayout;
+
     private SwipeRefreshWrapper mRefreshLayout;
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    private GoogleApiClient client;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        mContext = getApplicationContext();
+        ButterKnife.bind(this);
 
+        mContext = getApplicationContext();
         LinearLayout mainWindowLayout = (LinearLayout) findViewById(R.id.main_window);
+
+
         /* Note: Swipe down to referesh from SwipeRefresh view and infinite scroll of
          * RecyclerView don't work well together.
          * Hence we create RefreshWrapper by hand, which overrides the canChildScrollUp
@@ -79,7 +78,6 @@ public class TwitterActivity extends Activity {
          * Below is the code that removes the RecyclerView from R.id.main_window
          * and inserts as child of SwipeRefreshWrapper
          */
-        mRecyclerView = (RecyclerView) findViewById(R.id.listview);
 
         mRefreshLayout = new SwipeRefreshWrapper(mContext);
 
@@ -134,16 +132,12 @@ public class TwitterActivity extends Activity {
             getActionBar().setDisplayUseLogoEnabled(true);
         }
 
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 
         int location[]=new int[2];
-        View v = findViewById(R.id.sortDateButton);
         mRecyclerView.getLocationOnScreen(location);
         Toast toast=Toast.makeText(getApplicationContext(),
                 "Swipe down to referesh", Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.TOP| Gravity.CENTER_HORIZONTAL,v.getRight()-25, location[1]+20);
+        toast.setGravity(Gravity.TOP| Gravity.CENTER_HORIZONTAL,sortByDateButton.getRight()-25, location[1]+20);
         toast.show();
 
     }
@@ -198,40 +192,11 @@ public class TwitterActivity extends Activity {
     public void onStart() {
         super.onStart();
 
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Twitter Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://com.snijsure.twittersample/http/host/path")
-        );
-        AppIndex.AppIndexApi.start(client, viewAction);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Twitter Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://com.snijsure.twittersample/http/host/path")
-        );
-        AppIndex.AppIndexApi.end(client, viewAction);
-        client.disconnect();
     }
 
     // This task  "opens" as connection using Twitter4j API and fetches tweets

@@ -1,8 +1,5 @@
 package com.snijsure.twittersample;
 
-import java.util.Collections;
-import java.util.List;
-
 import android.graphics.Color;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.RecyclerView;
@@ -15,6 +12,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
+
+import java.util.Collections;
+import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
 
 public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.TweetHolder> {
     private final List<RowItem> mRowItems;
@@ -32,6 +35,7 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
     public TweetHolder onCreateViewHolder(ViewGroup parent, int pos) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.list_item, parent, false);
+        ButterKnife.bind(view);
         return new TweetHolder(view);
     }
 
@@ -71,15 +75,18 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
 
 
     class TweetHolder extends RecyclerView.ViewHolder {
-        private final ImageView imageView;
-        private final TextView tweetText;
-        private final TextView author;
-        private final TextView favcount;
-        private final TextView geoLocation;
         final View mHolderView;
+        @Bind(R.id.title) TextView tweetText;
+        @Bind(R.id.icon) ImageView imageView;
+        @Bind(R.id.author) TextView author;
+        @Bind(R.id.favcount) TextView favcount;
+        @Bind(R.id.geolocation) TextView geoLocation;
+
 
         public TweetHolder(View itemView) {
             super(itemView);
+            ButterKnife.bind(itemView);
+
             mHolderView = itemView;
             tweetText = (TextView) itemView.findViewById(R.id.title);
             imageView = (ImageView) itemView.findViewById(R.id.icon);
