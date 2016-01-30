@@ -12,8 +12,8 @@ import org.junit.runner.RunWith;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.swipeDown;
+import static android.support.test.espresso.action.ViewActions.swipeUp;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
-
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -31,7 +31,11 @@ public class TwitterAppTest {
         onView(withId(R.id.sortDateButton)).perform(click());
         onView(withId(R.id.sortTextButton)).perform(click());
         onView(withId(R.id.mostfav)).perform(click());
-        onView(withId(R.id.listview)).perform(swipeDown());
-        onView(withId(R.id.listview)).perform(swipeDown());
+
+
+        for ( int i = 0 ; i < 40; i++ ) {
+            onView(withId(R.id.listview)).perform(swipeUp());
+        }
+
     }
 }
