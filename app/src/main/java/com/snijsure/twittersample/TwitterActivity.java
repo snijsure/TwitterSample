@@ -23,13 +23,20 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import rx.Subscription;
+import rx.schedulers.Schedulers;
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterFactory;
+import twitter4j.auth.AccessToken;
 
 import static android.support.v7.widget.helper.ItemTouchHelper.Callback;
 
-public class TwitterActivity extends Activity implements OnTweetUpdate {
+public class TwitterActivity extends Activity implements rx.Observer<List<Status>> {
 
     @Bind(R.id.listview)
     RecyclerView mRecyclerView;
+    private Subscription subscription;
 
     private final String TAG = "TwitterActivity";
     private final String CALLBACKURL = "T4J_OAuth://callback_main";
@@ -45,10 +52,20 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
     TextView mTotalTweetCount;
     @Bind(R.id.sortDateButton)
     View sortByDateButton;
+    private Twitter mTwitter;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mTwitter = getTwitterHandle();
+        mStreamLoader =  TwitterConnectionTask.create(mTwitter, "#travel");
+
+        this.subscription = mStreamLoader.
+                subscribeOn(Schedulers.newThread())
+                .subscribe(this);
+
         setContentView(R.layout.main);
         ButterKnife.bind(this);
 
@@ -80,9 +97,8 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
             @Override
             public void onRefresh() {
                 // Refresh items
-                mStreamLoader.setFlag_loading(true);
                 mRefreshLayout.setRefreshing(true);
-                loadMoreItems(false);
+                loadMoreItems();
             }
         });
 
@@ -105,12 +121,8 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         mRecyclerView.setAdapter(adapter);
 
         dialog.show();
-        mStreamLoader = new TwitterConnectionTask(this);
 
         // Load twitter stream that talks about travel
-
-        mStreamLoader.execute("#travel");
-
         if (getActionBar() != null) {
             getActionBar().setDisplayShowHomeEnabled(true);
             getActionBar().setLogo(R.mipmap.ic_launcher);
@@ -127,13 +139,17 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
 
     }
 
-    synchronized private void loadMoreItems(boolean showDialog) {
-        if (showDialog)
-            dialog.show();
-        mStreamLoader = new TwitterConnectionTask(this);
-        mStreamLoader.execute("next");
+    synchronized private void loadMoreItems( ) {
+
+        //mStreamLoader = new TwitterConnectionTask(this);
+        //mStreamLoader.execute("next");
     }
 
+
+    protected void onDestroy() {
+        this.subscription.unsubscribe();
+        super.onDestroy();
+    }
 
     @Override
     public void onResume() {
@@ -184,7 +200,30 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         super.onStop();
     }
 
-    @Override
+    private  Twitter getTwitterHandle() {
+        Log.d(TAG, "In method getTwitterHandle");
+        Twitter twitterFactoryInstance;
+        twitterFactoryInstance = new TwitterFactory().getInstance();
+        Log.d(TAG, "TwitterFactory.getInstance returned " + twitterFactoryInstance);
+
+        twitterFactoryInstance.setOAuthConsumer(
+                this.getResources().getString(R.string.consumer_key),
+                this.getResources().getString(R.string.consumer_secret));
+        AccessToken a = new AccessToken(
+                this.getResources().getString(
+                        R.string.access_token),
+                this.getResources().getString(
+                        R.string.access_token_secret));
+        twitterFactoryInstance.setOAuthAccessToken(a);
+
+        try {
+            return twitterFactoryInstance;
+        } catch (Exception e) {
+            Log.d(TAG, "Exception while getting Twitter instance = " + e);
+        }
+        return null;
+    }
+
     public synchronized long onUpdate(List<twitter4j.Status> newTweets, long lowestTweetId) {
         long ret = lowestTweetId;
         for (twitter4j.Status s : newTweets) {
@@ -202,8 +241,6 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
             }
         }
         Collections.sort(rowItems, new RowItem.OrderByDate());
-
-
         adapter.notifyDataSetChanged();
         if (dialog.isShowing())
             dialog.dismiss();
@@ -213,6 +250,24 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         }
         mRefreshLayout.setRefreshing(false);
         return ret;
+    }
+
+
+    @Override
+    public void onCompleted() {
+        Log.d(TAG, "onCompleted");
+    }
+
+    @Override
+    public void onError(Throwable e) {
+        Log.e("MainActivity", "Uh oh! Error loading tweets: " + e.getCause().getMessage());
+        dialog.dismiss();
+    }
+
+    @Override
+    public void onNext(List<twitter4j.Status> tweets) {
+        onUpdate(tweets,0);
+        dialog.dismiss();
     }
 
     public class SwipeRefreshWrapper extends SwipeRefreshLayout {
@@ -240,9 +295,8 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         @Override
         synchronized public boolean canChildScrollUp() {
             boolean ret = isLastItemDisplaying(mRecyclerView);
-            if (ret && !mStreamLoader.isFlag_loading()) {
-                mStreamLoader.setFlag_loading(true);
-                loadMoreItems(true);
+            if (ret) {
+                loadMoreItems();
             }
             return ret;
         }
