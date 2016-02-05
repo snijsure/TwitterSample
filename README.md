@@ -14,4 +14,4 @@ Code searches for tweets with hash-tag #travel
 If you want to play with this app yourself  you will need to edit the
 app/src/main/res/values/strings.xml and provide various tokens & secrets for Twitter Oauth2.
 
-![Application Image](app_capture.png)
+![Application Image](https://github.com/snijsure/TwitterApiSampleV2/blob/master/app-capture.png)
