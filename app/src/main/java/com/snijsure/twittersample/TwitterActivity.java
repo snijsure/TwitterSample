@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,6 +24,8 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 import static android.support.v7.widget.helper.ItemTouchHelper.Callback;
 
@@ -34,9 +37,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
     private final String TAG = "TwitterActivity";
     private final String CALLBACKURL = "T4J_OAuth://callback_main";
     private List<RowItem> rowItems;
-
-    private TwitterConnectionTask mStreamLoader;
-
+    private TwitterFeedManager mStreamLoader;
 
     private ProgressDialog dialog;
     private CustomViewAdapter adapter;
@@ -45,6 +46,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
     TextView mTotalTweetCount;
     @Bind(R.id.sortDateButton)
     View sortByDateButton;
+    LinearLayout mainWindowLayout;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,7 +55,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         ButterKnife.bind(this);
 
         Context mContext = getApplicationContext();
-        LinearLayout mainWindowLayout = (LinearLayout) findViewById(R.id.main_window);
+        mainWindowLayout = (LinearLayout) findViewById(R.id.main_window);
 
 
             /* Note: Swipe down to refresh from SwipeRefresh view and infinite scroll of
@@ -80,7 +82,6 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
             @Override
             public void onRefresh() {
                 // Refresh items
-                mStreamLoader.setFlag_loading(true);
                 mRefreshLayout.setRefreshing(true);
                 loadMoreItems(false);
             }
@@ -104,12 +105,22 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
 
         mRecyclerView.setAdapter(adapter);
 
-        dialog.show();
-        mStreamLoader = new TwitterConnectionTask(this);
+
+        mStreamLoader = ((TwitterApp) getApplicationContext()).getTask();
 
         // Load twitter stream that talks about travel
-
-        mStreamLoader.execute("#travel");
+        if (savedInstanceState == null) {
+            dialog.show();
+            TwitterFeedManager.fetchTweets("#travel", mStreamLoader)
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new TweeterFeedSubscriber(this));
+        } else {
+            TwitterFeedManager.fetchTweets("next", mStreamLoader)
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new TweeterFeedSubscriber(this));
+        }
 
         if (getActionBar() != null) {
             getActionBar().setDisplayShowHomeEnabled(true);
@@ -127,17 +138,32 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
 
     }
 
-    synchronized private void loadMoreItems(boolean showDialog) {
-        if (showDialog)
-            dialog.show();
-        mStreamLoader = new TwitterConnectionTask(this);
-        mStreamLoader.execute("next");
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        ArrayList<RowItem> data = new ArrayList<RowItem>(adapter.getRowItems());
+        savedInstanceState.putParcelableArrayList("AdapterData", data);
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        ArrayList<RowItem> data = savedInstanceState.getParcelableArrayList("AdapterData");
+        if (data != null && data.size() > 0) {
+            rowItems.clear();
+            rowItems.addAll(data);
+        }
     }
 
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    synchronized private void loadMoreItems(boolean showDialog) {
+        if (showDialog)
+            dialog.show();
+        TwitterFeedManager.fetchTweets("next", mStreamLoader)
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new TweeterFeedSubscriber(this));
     }
 
     public void mostFav(@SuppressWarnings("UnusedParameters") View v) {
@@ -174,19 +200,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
-    public synchronized long onUpdate(List<twitter4j.Status> newTweets, long lowestTweetId) {
-        long ret = lowestTweetId;
+    public void onUpdate(List<twitter4j.Status> newTweets) {
         for (twitter4j.Status s : newTweets) {
             RowItem item = new RowItem(
                     s.getUser().getBiggerProfileImageURL(),
@@ -197,13 +211,8 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
                     s.getGeoLocation()
             );
             rowItems.add(item);
-            if (s.getId() < lowestTweetId) {
-                ret = s.getId();
-            }
         }
         Collections.sort(rowItems, new RowItem.OrderByDate());
-
-
         adapter.notifyDataSetChanged();
         if (dialog.isShowing())
             dialog.dismiss();
@@ -212,7 +221,19 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
             mTotalTweetCount.setText(totalCount);
         }
         mRefreshLayout.setRefreshing(false);
-        return ret;
+    }
+    
+    @Override
+    public void onError(Throwable e) {
+        Snackbar.make(mainWindowLayout, "Error while updating tweet", Snackbar.LENGTH_LONG)
+                .setAction("Close", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                    }
+                })
+                .setActionTextColor(getResources().getColor(android.R.color.holo_red_light ))
+                .show();
     }
 
     public class SwipeRefreshWrapper extends SwipeRefreshLayout {
@@ -240,8 +261,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         @Override
         synchronized public boolean canChildScrollUp() {
             boolean ret = isLastItemDisplaying(mRecyclerView);
-            if (ret && !mStreamLoader.isFlag_loading()) {
-                mStreamLoader.setFlag_loading(true);
+            if (ret) {
                 loadMoreItems(true);
             }
             return ret;

@@ -1,5 +1,7 @@
 package com.snijsure.twittersample;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
 import java.util.Date;
@@ -8,13 +10,48 @@ import java.util.Comparator;
 import twitter4j.GeoLocation;
 
 
-class RowItem implements Comparable<RowItem> {
+class RowItem implements Comparable<RowItem>, Parcelable {
     private final String url;
     private final String tweetText;
     private final Date tweetDate;
     private final String userName;
     private final int favoriteCount;
     private final GeoLocation geoLocation;
+
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.url);
+        dest.writeString(this.tweetText);
+        dest.writeSerializable(this.tweetDate);
+        dest.writeString(this.userName);
+        dest.writeInt(this.favoriteCount);
+        dest.writeSerializable(this.geoLocation);
+    }
+
+    protected RowItem(Parcel in) {
+        this.url = in.readString();
+        this.tweetText = in.readString();
+        this.tweetDate = (java.util.Date) in.readSerializable();
+        this.userName = in.readString();
+        this.favoriteCount = in.readInt();
+        this.geoLocation = (GeoLocation) in.readSerializable();
+    }
+
+    public static final Parcelable.Creator<RowItem> CREATOR = new Parcelable.Creator<RowItem>() {
+        public RowItem createFromParcel(Parcel source) {
+            return new RowItem(source);
+        }
+
+        public RowItem[] newArray(int size) {
+            return new RowItem[size];
+        }
+    };
 
     public RowItem(String url, String tweetText, Date tweetDate,
                    String userName, int favoriteCount, GeoLocation location) {

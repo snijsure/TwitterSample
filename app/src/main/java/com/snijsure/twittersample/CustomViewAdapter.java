@@ -61,7 +61,9 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
         return mRowItems.size();
     }
 
-
+    public List<RowItem> getRowItems() {
+        return mRowItems;
+    }
     public void onItemDismiss(int position) {
         mRowItems.remove(position);
         notifyItemRemoved(position);

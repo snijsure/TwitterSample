@@ -6,5 +6,6 @@ import twitter4j.Status;
 
 @SuppressWarnings("unused")
 interface OnTweetUpdate {
-    long onUpdate(List<Status> s, long lowestTweet);
+    void onUpdate(List<Status> s);
+    void onError(Throwable e);
 }
