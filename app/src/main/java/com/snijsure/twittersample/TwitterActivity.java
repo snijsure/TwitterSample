@@ -116,10 +116,12 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new TweeterFeedSubscriber(this));
         } else {
+            /* This will cause us to fetch more data on rotation
             TwitterFeedManager.fetchTweets("next", mStreamLoader)
                     .subscribeOn(Schedulers.newThread())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new TweeterFeedSubscriber(this));
+             */
         }
 
         if (getActionBar() != null) {
@@ -222,7 +224,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         }
         mRefreshLayout.setRefreshing(false);
     }
-    
+
     @Override
     public void onError(Throwable e) {
         Snackbar.make(mainWindowLayout, "Error while updating tweet", Snackbar.LENGTH_LONG)
