@@ -1,11 +1,8 @@
 package com.snijsure.twittersample;
 
 import android.graphics.Color;
-import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -21,15 +18,11 @@ import butterknife.ButterKnife;
 
 public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.TweetHolder> {
     private final List<RowItem> mRowItems;
-    private ItemTouchHelper mItemTouchHelper;
 
     public CustomViewAdapter(List<RowItem> items) {
         mRowItems = items;
     }
 
-    public void setTouchHelper(ItemTouchHelper in) {
-        mItemTouchHelper = in;
-    }
 
     @Override
     public TweetHolder onCreateViewHolder(ViewGroup parent, int pos) {
@@ -43,17 +36,6 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
     public void onBindViewHolder(final TweetHolder holder, int pos) {
         RowItem rowItem = mRowItems.get(pos);
         holder.bindTweet(rowItem);
-        // Start a drag whenever the handle view it touched
-        holder.mHolderView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
-                    mItemTouchHelper.startDrag(holder);
-                }
-                return false;
-            }
-        });
-
     }
 
     @Override

@@ -9,7 +9,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
@@ -26,8 +25,6 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
-
-import static android.support.v7.widget.helper.ItemTouchHelper.Callback;
 
 public class TwitterActivity extends Activity implements OnTweetUpdate {
 
@@ -96,12 +93,6 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         dialog.setCancelable(false);
 
         adapter = new CustomViewAdapter(rowItems);
-
-        Callback callback = new SimpleItemTouchHelperCallback(adapter);
-
-        ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
-        touchHelper.attachToRecyclerView(mRecyclerView);
-        adapter.setTouchHelper(touchHelper);
 
         mRecyclerView.setAdapter(adapter);
 
