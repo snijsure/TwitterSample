@@ -43,7 +43,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
     TextView mTotalTweetCount;
     @Bind(R.id.sortDateButton)
     View sortByDateButton;
-    LinearLayout mainWindowLayout;
+    private LinearLayout mainWindowLayout;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -80,6 +80,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
             public void onRefresh() {
                 // Refresh items
                 mRefreshLayout.setRefreshing(true);
+                mRefreshLayout.setEnabled(false);
                 loadMoreItems(false);
             }
         });
@@ -133,7 +134,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
-        ArrayList<RowItem> data = new ArrayList<RowItem>(adapter.getRowItems());
+        ArrayList<RowItem> data = new ArrayList<>(adapter.getRowItems());
         savedInstanceState.putParcelableArrayList("AdapterData", data);
         super.onSaveInstanceState(savedInstanceState);
     }
@@ -153,6 +154,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
     synchronized private void loadMoreItems(boolean showDialog) {
         if (showDialog)
             dialog.show();
+        Log.d(TAG, "loadMoreItems fetching tweets");
         TwitterFeedManager.fetchTweets("next", mStreamLoader)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -214,6 +216,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
             mTotalTweetCount.setText(totalCount);
         }
         mRefreshLayout.setRefreshing(false);
+        mRefreshLayout.setEnabled(true);
     }
 
     @Override

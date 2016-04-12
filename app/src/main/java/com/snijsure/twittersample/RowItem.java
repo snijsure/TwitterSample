@@ -4,8 +4,8 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
-import java.util.Date;
 import java.util.Comparator;
+import java.util.Date;
 
 import twitter4j.GeoLocation;
 

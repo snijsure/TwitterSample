@@ -7,8 +7,8 @@ import android.util.Log;
 /**
  * Created by subodhnijsure on 3/15/16.
  */
-public class TwitterApp extends Application {
-    private static String TAG = "TwitterApp";
+class TwitterApp extends Application {
+    private static final String TAG = "TwitterApp";
     private TwitterFeedManager mStreamLoader = null;
 
     @Override

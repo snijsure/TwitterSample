@@ -19,7 +19,7 @@ import twitter4j.auth.AccessToken;
 class TwitterFeedManager {
     private static final String TAG = "TwitterActivity";
     private static Query mTwitterQuery;
-    private Twitter mTwitter;
+    private final Twitter mTwitter;
     private long lowestTweetId = Long.MAX_VALUE;
 
     private List<twitter4j.Status> statuses;
@@ -64,7 +64,7 @@ class TwitterFeedManager {
         });
     }
 
-    List<twitter4j.Status> fetchTweetsAboutTopic(String queryString) {
+    private List<twitter4j.Status> fetchTweetsAboutTopic(String queryString) {
         try {
             QueryResult mQueryResults;
             if (queryString.equals("next")) {

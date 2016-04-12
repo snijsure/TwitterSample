@@ -51,15 +51,8 @@ public class CustomViewAdapter extends RecyclerView.Adapter<CustomViewAdapter.Tw
         notifyItemRemoved(position);
     }
 
-    public boolean onItemMove(int fromPosition, int toPosition) {
-        Collections.swap(mRowItems, fromPosition, toPosition);
-        notifyItemMoved(fromPosition, toPosition);
-        return true;
-    }
-
-
     class TweetHolder extends RecyclerView.ViewHolder {
-        View mHolderView;
+        final View mHolderView;
         @Bind(R.id.title) TextView tweetText;
         @Bind(R.id.icon) ImageView imageView;
         @Bind(R.id.author) TextView author;

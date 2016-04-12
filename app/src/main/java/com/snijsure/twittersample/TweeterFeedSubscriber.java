@@ -8,8 +8,8 @@ import twitter4j.Status;
 /**
  * Created by subodhnijsure on 3/19/16.
  */
-public class TweeterFeedSubscriber extends Subscriber<List<Status>> {
-    TwitterActivity mActivity;
+class TweeterFeedSubscriber extends Subscriber<List<Status>> {
+    private final TwitterActivity mActivity;
     TweeterFeedSubscriber(TwitterActivity activity) {
         mActivity = activity;
     }
