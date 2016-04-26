@@ -118,6 +118,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new TweeterFeedSubscriber(this));
              */
+
         }
 
         if (getActionBar() != null) {
@@ -151,6 +152,8 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         if (data != null && data.size() > 0) {
             rowItems.clear();
             rowItems.addAll(data);
+            String totalCount = "# " + rowItems.size();
+            mTotalTweetCount.setText(totalCount);
         }
     }
 

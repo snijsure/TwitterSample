@@ -5,16 +5,18 @@
     android:layout_height="fill_parent"
     android:orientation="vertical">
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/action_layout"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="vertical"
         >
 
         <Button
             android:id="@+id/mostfav"
             style="?android:attr/buttonBarButtonStyle"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="mostFav"
@@ -23,29 +25,33 @@
         <Button
             android:id="@+id/sortDateButton"
             style="?android:attr/buttonBarButtonStyle"
+            android:layout_toRightOf="@+id/mostfav"
+            android:layout_alignParentTop="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="sortByDate"
-
             android:text="@string/sortdate" />
 
         <Button
             android:id="@+id/sortTextButton"
             style="?android:attr/buttonBarButtonStyle"
+            android:layout_toRightOf="@+id/sortDateButton"
+            android:layout_alignParentTop="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="sortByText"
-
             android:text="@string/sorttext" />
+
         <TextView
             android:id="@+id/tweetCount"
             style="?android:attr/buttonBarButtonStyle"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
+            android:layout_height="match_parent"
             android:gravity="right"
             />
-    </LinearLayout>
+    </RelativeLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/listview"
