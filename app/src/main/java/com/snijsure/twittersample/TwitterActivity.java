@@ -12,6 +12,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,6 +26,9 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+import com.mixpanel.android.mpmetrics.MixpanelAPI;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class TwitterActivity extends Activity implements OnTweetUpdate {
 
@@ -44,14 +48,16 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
     @Bind(R.id.sortDateButton)
     View sortByDateButton;
     private LinearLayout mainWindowLayout;
-
+    private boolean updatePending = false;
+    MixpanelAPI mixpanel;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         ButterKnife.bind(this);
-
         Context mContext = getApplicationContext();
+        String project_token = mContext.getString(R.string.mixPanelToken);
+        mixpanel = MixpanelAPI.getInstance(mContext,project_token);
         mainWindowLayout = (LinearLayout) findViewById(R.id.main_window);
 
 
@@ -79,8 +85,6 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
             @Override
             public void onRefresh() {
                 // Refresh items
-                mRefreshLayout.setRefreshing(true);
-                mRefreshLayout.setEnabled(false);
                 loadMoreItems(false);
             }
         });
@@ -152,50 +156,72 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
 
 
     synchronized private void loadMoreItems(boolean showDialog) {
-        if (showDialog)
-            dialog.show();
-        Log.d(TAG, "loadMoreItems fetching tweets");
-        TwitterFeedManager.fetchTweets("next", mStreamLoader)
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new TweeterFeedSubscriber(this));
+        if ( !updatePending ) {
+            updatePending = true;
+            if (showDialog)
+                dialog.show();
+            mRefreshLayout.setRefreshing(true);
+            mRefreshLayout.setEnabled(false);
+            TwitterFeedManager.fetchTweets("next", mStreamLoader)
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new TweeterFeedSubscriber(this));
+        }
     }
 
     public void mostFav(@SuppressWarnings("UnusedParameters") View v) {
         dialog.show();
-        Log.d(TAG, "Sort By fav count");
         Collections.sort(rowItems, new RowItem.OrderByFavCount());
         adapter.notifyDataSetChanged();
 
         dialog.dismiss();
         mRecyclerView.scrollToPosition(0);
+        try {
+            JSONObject props = new JSONObject();
+            props.put("Most Fav Sort", true);
+            mixpanel.track("MostFav",props);
+        } catch(JSONException e) {
+            Log.e(TAG,"Unale to add prop Most Fav Sort");
+        }
     }
 
     // Method to sort list by date
     public synchronized void sortByDate(@SuppressWarnings("UnusedParameters") View v) {
         dialog.show();
-        Log.d(TAG, "Sort By Date");
         Collections.sort(rowItems, new RowItem.OrderByDate());
         adapter.notifyDataSetChanged();
 
         dialog.dismiss();
         mRecyclerView.scrollToPosition(0);
+        try {
+            JSONObject props = new JSONObject();
+            props.put("Date Sort", true);
+            mixpanel.track("DateSort",props);
+        } catch(JSONException e) {
+            Log.e(TAG,"Unale to add prop Date Sort");
+        }
 
     }
 
     // Method to sort list by tweat text
     public void sortByText(@SuppressWarnings("UnusedParameters") View v) {
         dialog.show();
-        Log.d(TAG, "Sort By Text");
         Collections.sort(rowItems, new RowItem.OrderByText());
         adapter.notifyDataSetChanged();
         dialog.dismiss();
         mRecyclerView.scrollToPosition(0);
+        try {
+            JSONObject props = new JSONObject();
+            props.put("Text Sort", true);
+            mixpanel.track("TextSort",props);
+        } catch(JSONException e) {
+            Log.e(TAG,"Unale to add prop Text Sort");
+        }
 
     }
 
     @Override
-    public void onUpdate(List<twitter4j.Status> newTweets) {
+    synchronized public void onUpdate(List<twitter4j.Status> newTweets) {
         for (twitter4j.Status s : newTweets) {
             RowItem item = new RowItem(
                     s.getUser().getBiggerProfileImageURL(),
@@ -209,6 +235,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         }
         Collections.sort(rowItems, new RowItem.OrderByDate());
         adapter.notifyDataSetChanged();
+        adapter.getItemCount();
         if (dialog.isShowing())
             dialog.dismiss();
         if (mTotalTweetCount != null) {
@@ -217,6 +244,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         }
         mRefreshLayout.setRefreshing(false);
         mRefreshLayout.setEnabled(true);
+        updatePending = false;
     }
 
     @Override
@@ -247,9 +275,10 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
                 int lastVisibleItemPosition =
                         ((LinearLayoutManager) recyclerView.getLayoutManager()).
                                 findLastCompletelyVisibleItemPosition();
-                if (lastVisibleItemPosition != RecyclerView.NO_POSITION
-                        && lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1)
+                if (updatePending == false && lastVisibleItemPosition != RecyclerView.NO_POSITION
+                        && lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1) {
                     return true;
+                }
             }
             return false;
         }
@@ -261,6 +290,13 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
                 loadMoreItems(true);
             }
             return ret;
+        }
+        @Override
+        public boolean onInterceptTouchEvent(MotionEvent ev) {
+            if (updatePending == false)
+                return super.onInterceptTouchEvent(ev);
+            else
+                return false;
         }
 
     }

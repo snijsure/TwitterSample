@@ -21,7 +21,7 @@ class TwitterFeedManager {
     private static Query mTwitterQuery;
     private final Twitter mTwitter;
     private long lowestTweetId = Long.MAX_VALUE;
-
+    private int TWEET_COUNT = 25;
     private List<twitter4j.Status> statuses;
 
     public TwitterFeedManager(TwitterApp app) {
@@ -52,7 +52,8 @@ class TwitterFeedManager {
         return null;
     }
 
-    public static Observable<List<Status>> fetchTweets(final String queryString, final TwitterFeedManager task) {
+    public static Observable<List<Status>> fetchTweets(final String queryString,
+                                                       final TwitterFeedManager task) {
 
         return Observable.create(new Observable.OnSubscribe<List<Status>>() {
             @Override
@@ -82,7 +83,7 @@ class TwitterFeedManager {
                 Log.d(TAG, "Sending query " + queryString + " to twitter");
                 TwitterFeedManager.mTwitterQuery = new Query(queryString);
                 TwitterFeedManager.mTwitterQuery.setSince("2015-01-01");
-                TwitterFeedManager.mTwitterQuery.setCount(50);
+                TwitterFeedManager.mTwitterQuery.setCount(TWEET_COUNT);
                 // Query result object as described in
                 // http://twitter4j.org/javadoc/twitter4j/QueryResult.html
                 mQueryResults = mTwitter.search(TwitterFeedManager.mTwitterQuery);
