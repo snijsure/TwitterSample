@@ -5,18 +5,26 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.R.menu;
+import android.view.Menu;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +38,7 @@ import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class TwitterActivity extends Activity implements OnTweetUpdate {
+public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate {
 
     @Bind(R.id.listview)
     RecyclerView mRecyclerView;
@@ -50,6 +58,8 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
     private LinearLayout mainWindowLayout;
     private boolean updatePending = false;
     MixpanelAPI mixpanel;
+    DrawerLayout drawerLayout;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,6 +100,12 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         });
 
         mTotalTweetCount = (TextView) findViewById(R.id.tweetCount);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        if (navigationView != null) {
+            setupDrawerContent(navigationView);
+        }
+
         rowItems = new ArrayList<>();
 
         dialog = new ProgressDialog(this);
@@ -135,6 +151,39 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, sortByDateButton.getRight() - 25, location[1] + 20);
         toast.show();
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar_actions, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                drawerLayout.openDrawer(GravityCompat.START);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void setupDrawerContent(final NavigationView navigationView) {
+        navigationView.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(MenuItem menuItem) {
+                        menuItem.setChecked(true);
+                        switch (menuItem.getItemId()) {
+                            case R.id.nav_home:
+                                drawerLayout.closeDrawers();
+                                return true;
+                            default:
+                                return false;
+                        }
+                    }
+                });
     }
 
     @Override
@@ -278,7 +327,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
                 int lastVisibleItemPosition =
                         ((LinearLayoutManager) recyclerView.getLayoutManager()).
                                 findLastCompletelyVisibleItemPosition();
-                if (updatePending == false && lastVisibleItemPosition != RecyclerView.NO_POSITION
+                if (!updatePending && lastVisibleItemPosition != RecyclerView.NO_POSITION
                         && lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1) {
                     return true;
                 }
@@ -296,10 +345,7 @@ public class TwitterActivity extends Activity implements OnTweetUpdate {
         }
         @Override
         public boolean onInterceptTouchEvent(MotionEvent ev) {
-            if (updatePending == false)
-                return super.onInterceptTouchEvent(ev);
-            else
-                return false;
+            return !updatePending && super.onInterceptTouchEvent(ev);
         }
 
     }

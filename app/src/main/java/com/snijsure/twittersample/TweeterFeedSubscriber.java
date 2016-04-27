@@ -13,6 +13,7 @@ class TweeterFeedSubscriber extends Subscriber<List<Status>> {
     TweeterFeedSubscriber(TwitterActivity activity) {
         mActivity = activity;
     }
+
     @Override
     public void onNext(List<Status> tweets) {
         mActivity.onUpdate(tweets);

@@ -1,64 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main_window"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical">
 
-    <RelativeLayout
-        android:id="@+id/action_layout"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:orientation="vertical"
-        >
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:theme="@style/AppTheme"
+    android:fitsSystemWindows="true">
 
-        <Button
-            android:id="@+id/mostfav"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/main_window"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:id="@+id/action_layout"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="vertical"
+            >
+
+            <Button
+                android:id="@+id/mostfav"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="mostFav"
+                android:text="Most Fav" />
+
+            <Button
+                android:id="@+id/sortDateButton"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_toRightOf="@+id/mostfav"
+                android:layout_alignParentTop="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="sortByDate"
+                android:text="@string/sortdate" />
+
+            <Button
+                android:id="@+id/sortTextButton"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_toRightOf="@+id/sortDateButton"
+                android:layout_alignParentTop="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="sortByText"
+                android:text="@string/sorttext" />
+
+            <TextView
+                android:id="@+id/tweetCount"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="right"
+                />
+        </RelativeLayout>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/listview"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="mostFav"
-            android:text="Most Fav" />
+            android:layout_height="match_parent">
 
-        <Button
-            android:id="@+id/sortDateButton"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_toRightOf="@+id/mostfav"
-            android:layout_alignParentTop="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="sortByDate"
-            android:text="@string/sortdate" />
+        </android.support.v7.widget.RecyclerView>
+    </LinearLayout>
 
-        <Button
-            android:id="@+id/sortTextButton"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_toRightOf="@+id/sortDateButton"
-            android:layout_alignParentTop="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="sortByText"
-            android:text="@string/sorttext" />
-
-        <TextView
-            android:id="@+id/tweetCount"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentTop="true"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:gravity="right"
-            />
-    </RelativeLayout>
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/listview"
+    <android.support.design.widget.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_height="match_parent"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent">
-
-    </android.support.v7.widget.RecyclerView>
-
-
-</LinearLayout>
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true"
+        app:menu="@menu/drawer_actions"/>
+</android.support.v4.widget.DrawerLayout>

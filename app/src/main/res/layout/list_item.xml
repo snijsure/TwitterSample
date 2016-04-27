@@ -53,8 +53,7 @@
                     android:layout_marginStart="4dp"
                     android:gravity="start"
                     android:singleLine="true"
-                    android:text="favcont"
-                    android:textColor="@color/colorAccent" />
+                    android:text="favcont" />
 
                 <TextView
                     android:id="@+id/author"
@@ -63,8 +62,7 @@
                     android:layout_marginStart="10dp"
                     android:gravity="end"
                     android:singleLine="true"
-                    android:text="author"
-                    android:textColor="@color/colorAccent" />
+                    android:text="author" />
             </LinearLayout>
         </LinearLayout>
 

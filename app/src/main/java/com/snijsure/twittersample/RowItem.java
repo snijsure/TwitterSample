@@ -34,7 +34,7 @@ class RowItem implements Comparable<RowItem>, Parcelable {
         dest.writeSerializable(this.geoLocation);
     }
 
-    protected RowItem(Parcel in) {
+    private RowItem(Parcel in) {
         this.url = in.readString();
         this.tweetText = in.readString();
         this.tweetDate = (java.util.Date) in.readSerializable();

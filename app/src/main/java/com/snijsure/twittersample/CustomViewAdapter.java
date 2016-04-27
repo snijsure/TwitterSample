@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import com.koushikdutta.urlimageviewhelper.UrlImageViewHelper;
 
-import java.util.Collections;
 import java.util.List;
 
 import butterknife.Bind;
