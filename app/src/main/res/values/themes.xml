@@ -1,21 +1,9 @@
 <resources>
-    <!-- inherit from the material theme -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="android:statusBarColor">@color/green_100</item>
-        <item name="android:windowActionBar">true</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="colorPrimary">@color/blue_200</item>
-        <item name="colorPrimaryDark">@color/blue_800</item>
-        <item name="colorAccent">@color/amber_800</item>
-        <!-- These are some interesting options if you are tight on space.
-        <item name="android:windowActionBar">true</item>
-        <item name="android:windowNoTitle">false</item>
-        <item name="android:displayOptions">disableHome</item>
-       -->
-    </style>
-    <style name="Divider.Horizontal" parent="AppTheme">
+
+    <style name="HorizontalDivider" parent="AppTheme">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">1dp</item>
-        <item name="android:background">@color/grey_900</item>
+        <item name="android:background">@color/divider</item>
     </style>
+
 </resources>
