@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Debug;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
@@ -16,6 +17,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.TimingLogger;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -34,9 +36,14 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+
+import com.digits.sdk.android.DigitsAuthButton;
+import com.digits.sdk.android.DigitsException;
+import com.digits.sdk.android.DigitsSession;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import org.json.JSONException;
 import org.json.JSONObject;
+import com.digits.sdk.android.AuthCallback;
 
 public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate {
 
@@ -48,7 +55,7 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
     private List<RowItem> rowItems;
     private TwitterFeedManager mStreamLoader;
 
-    private ProgressDialog dialog;
+    private ProgressDialog progressDialog;
     private CustomViewAdapter adapter;
     private SwipeRefreshWrapper mRefreshLayout;
     @Bind(R.id.tweetCount)
@@ -59,7 +66,7 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
     private boolean updatePending = false;
     MixpanelAPI mixpanel;
     DrawerLayout drawerLayout;
-
+    SessionManager loginSession;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,8 +75,12 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
         Context mContext = getApplicationContext();
         String project_token = mContext.getString(R.string.mixPanelToken);
         mixpanel = MixpanelAPI.getInstance(mContext,project_token);
-        mainWindowLayout = (LinearLayout) findViewById(R.id.main_window);
 
+        loginSession = new SessionManager(getApplicationContext());
+        loginSession.checkLogin();
+
+        if ( loginSession.isLoggedIn() ) {
+            mainWindowLayout = (LinearLayout) findViewById(R.id.main_window);
 
             /* Note: Swipe down to refresh from SwipeRefresh view and infinite scroll of
              * RecyclerView don't work well together.
@@ -79,55 +90,56 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
              * and inserts as child of SwipeRefreshWrapper
              */
 
-        mRefreshLayout = new SwipeRefreshWrapper(mContext);
+            mRefreshLayout = new SwipeRefreshWrapper(mContext);
 
-        mainWindowLayout.removeView(mRecyclerView);
+            mainWindowLayout.removeView(mRecyclerView);
 
-        mainWindowLayout.addView(mRefreshLayout, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+            mainWindowLayout.addView(mRefreshLayout, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT);
 
-        mRefreshLayout.addView(mRecyclerView, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
-        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
+            mRefreshLayout.addView(mRecyclerView, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+            LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
+            mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                // Refresh items
-                loadMoreItems(false);
+            mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    // Refresh items
+                    loadMoreItems(false);
+                }
+            });
+
+            mTotalTweetCount = (TextView) findViewById(R.id.tweetCount);
+            drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+            if (navigationView != null) {
+                setupDrawerContent(navigationView);
             }
-        });
 
-        mTotalTweetCount = (TextView) findViewById(R.id.tweetCount);
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        if (navigationView != null) {
-            setupDrawerContent(navigationView);
-        }
+            rowItems = new ArrayList<>();
 
-        rowItems = new ArrayList<>();
+            progressDialog = new ProgressDialog(this);
+            progressDialog.setMessage("Updating Tweets...");
+            progressDialog.setIndeterminate(true);
+            progressDialog.setCancelable(false);
 
-        dialog = new ProgressDialog(this);
-        dialog.setMessage("Updating Tweets...");
-        dialog.setIndeterminate(true);
-        dialog.setCancelable(false);
+            adapter = new CustomViewAdapter(rowItems);
 
-        adapter = new CustomViewAdapter(rowItems);
-
-        mRecyclerView.setAdapter(adapter);
+            mRecyclerView.setAdapter(adapter);
 
 
-        mStreamLoader = ((TwitterApp) getApplicationContext()).getTask();
+            mStreamLoader = ((TwitterApp) getApplicationContext()).getTask();
 
-        // Load twitter stream that talks about travel
-        if (savedInstanceState == null) {
-            dialog.show();
-            TwitterFeedManager.fetchTweets("#travel", mStreamLoader)
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new TweeterFeedSubscriber(this));
-        } else {
+            // Load twitter stream that talks about travel
+            if (savedInstanceState == null) {
+
+
+                TwitterFeedManager.fetchTweets("#travel", mStreamLoader)
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new TweeterFeedSubscriber(this));
+            } else {
             /* This will cause us to fetch more data on rotation
             TwitterFeedManager.fetchTweets("next", mStreamLoader)
                     .subscribeOn(Schedulers.newThread())
@@ -135,21 +147,24 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
                     .subscribe(new TweeterFeedSubscriber(this));
              */
 
+            }
+
+            if (getActionBar() != null) {
+                getActionBar().setDisplayShowHomeEnabled(true);
+                getActionBar().setLogo(R.mipmap.ic_launcher);
+                getActionBar().setDisplayUseLogoEnabled(true);
+            }
+            progressDialog.show();
+            int location[] = new int[2];
+            mRecyclerView.getLocationOnScreen(location);
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    "Swipe down to referesh", Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL,
+                    sortByDateButton.getRight() - 25, location[1] + 20);
+            toast.show();
         }
 
-        if (getActionBar() != null) {
-            getActionBar().setDisplayShowHomeEnabled(true);
-            getActionBar().setLogo(R.mipmap.ic_launcher);
-            getActionBar().setDisplayUseLogoEnabled(true);
-        }
-
-
-        int location[] = new int[2];
-        mRecyclerView.getLocationOnScreen(location);
-        Toast toast = Toast.makeText(getApplicationContext(),
-                "Swipe down to referesh", Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, sortByDateButton.getRight() - 25, location[1] + 20);
-        toast.show();
+        Debug.stopMethodTracing();
 
     }
 
@@ -165,6 +180,10 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
             case android.R.id.home:
                 drawerLayout.openDrawer(GravityCompat.START);
                 return true;
+            case R.id.action_logout:
+                Log.d(TAG, "onOptionsItemSelected Logging out user");
+                loginSession.logoutUser();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -179,6 +198,11 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
                             case R.id.nav_home:
                                 drawerLayout.closeDrawers();
                                 return true;
+                            case R.id.action_logout:
+                                Log.d(TAG, "setupDrawerContent Logging out user");
+                                loginSession.logoutUser();
+                                drawerLayout.closeDrawers();
+                                return true;
                             default:
                                 return false;
                         }
@@ -188,8 +212,12 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
-        ArrayList<RowItem> data = new ArrayList<>(adapter.getRowItems());
-        savedInstanceState.putParcelableArrayList("AdapterData", data);
+        if ( adapter != null ) {
+            ArrayList<RowItem> data = new ArrayList<>(adapter.getRowItems());
+            if ( data != null && data.size() > 0 ) {
+                savedInstanceState.putParcelableArrayList("AdapterData", data);
+            }
+        }
         super.onSaveInstanceState(savedInstanceState);
     }
 
@@ -211,7 +239,7 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
         if ( !updatePending ) {
             updatePending = true;
             if (showDialog)
-                dialog.show();
+                progressDialog.show();
             mRefreshLayout.setRefreshing(true);
             mRefreshLayout.setEnabled(false);
             TwitterFeedManager.fetchTweets("next", mStreamLoader)
@@ -222,12 +250,14 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
     }
 
     public void mostFav(@SuppressWarnings("UnusedParameters") View v) {
-        dialog.show();
+        progressDialog.show();
         Collections.sort(rowItems, new RowItem.OrderByFavCount());
         adapter.notifyDataSetChanged();
 
-        dialog.dismiss();
+        progressDialog.dismiss();
         mRecyclerView.scrollToPosition(0);
+
+        TimingLogger timings = new TimingLogger(TAG, "MixPanelStart");
         try {
             JSONObject props = new JSONObject();
             props.put("Most Fav Sort", true);
@@ -235,16 +265,20 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
         } catch(JSONException e) {
             Log.e(TAG,"Unale to add prop Most Fav Sort");
         }
+        timings.dumpToLog();
+        timings.reset(TAG,"MixPanelStart");
+        Log.d(TAG, "MixPanelStart End");
     }
 
     // Method to sort list by date
     public synchronized void sortByDate(@SuppressWarnings("UnusedParameters") View v) {
-        dialog.show();
+        progressDialog.show();
         Collections.sort(rowItems, new RowItem.OrderByDate());
         adapter.notifyDataSetChanged();
 
-        dialog.dismiss();
+        progressDialog.dismiss();
         mRecyclerView.scrollToPosition(0);
+        TimingLogger timings = new TimingLogger(TAG, "MixPanelStart");
         try {
             JSONObject props = new JSONObject();
             props.put("Date Sort", true);
@@ -252,16 +286,20 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
         } catch(JSONException e) {
             Log.e(TAG,"Unale to add prop Date Sort");
         }
-
+        timings.dumpToLog(); // Dump the timing.
+        timings.reset(TAG,"MixPanelStart");
+        Log.d(TAG, "MixPanelStart End");
     }
 
     // Method to sort list by tweat text
     public void sortByText(@SuppressWarnings("UnusedParameters") View v) {
-        dialog.show();
+        progressDialog.show();
         Collections.sort(rowItems, new RowItem.OrderByText());
         adapter.notifyDataSetChanged();
-        dialog.dismiss();
+        progressDialog.dismiss();
         mRecyclerView.scrollToPosition(0);
+
+        TimingLogger timings = new TimingLogger(TAG, "MixPanelStart");
         try {
             JSONObject props = new JSONObject();
             props.put("Text Sort", true);
@@ -269,7 +307,9 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
         } catch(JSONException e) {
             Log.e(TAG,"Unale to add prop Text Sort");
         }
-
+        timings.dumpToLog();
+        timings.reset(TAG,"MixPanelStart");
+        Log.d(TAG, "MixPanelStart End");
     }
 
     @Override
@@ -288,8 +328,8 @@ public class TwitterActivity extends AppCompatActivity implements OnTweetUpdate 
         Collections.sort(rowItems, new RowItem.OrderByDate());
         adapter.notifyDataSetChanged();
         adapter.getItemCount();
-        if (dialog.isShowing())
-            dialog.dismiss();
+        if (progressDialog.isShowing())
+            progressDialog.dismiss();
         if (mTotalTweetCount != null) {
             String totalCount = "# " + adapter.getItemCount();
             mTotalTweetCount.setText(totalCount);
